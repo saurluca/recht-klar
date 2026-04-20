@@ -13,6 +13,10 @@ import { CheckCircle2 } from "lucide-react";
 import { startCheckout } from "./actions";
 import { Disclaimer } from "@/components/disclaimer";
 
+type PricingPageProps = {
+  searchParams?: Promise<{ next?: string }>;
+};
+
 const FEATURES = [
   "Geführter Chat-Intake",
   "Legal Scorecard",
@@ -21,7 +25,11 @@ const FEATURES = [
   "Keine Abo-Falle",
 ];
 
-export default function PricingPage() {
+export default async function PricingPage({ searchParams }: PricingPageProps) {
+  const sp = searchParams ? await searchParams : {};
+  const next = sp.next === "/check/finish" ? "/check/finish" : "/check";
+  const afterChat = next === "/check/finish";
+
   const mock =
     process.env.NEXT_PUBLIC_MOCK_PAYMENT === "1" ||
     process.env.NEXT_PUBLIC_MOCK_PAYMENT === "true";
@@ -33,7 +41,9 @@ export default function PricingPage() {
           Ein Preis. Eine klare Orientierung.
         </h1>
         <p className="text-muted-foreground mt-1 text-center text-xs sm:text-sm">
-          Legal-Check in wenigen Minuten.
+          {afterChat
+            ? "Einmalig 40 € – danach siehst du deine Legal Scorecard."
+            : "Legal-Check in wenigen Minuten."}
         </p>
 
         <Card className="mt-4 border-border/80 shadow-sm sm:mt-5">
@@ -80,12 +90,15 @@ export default function PricingPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-2 border-t border-border/60 p-4 sm:p-5">
             <form action={startCheckout} className="w-full">
+              <input type="hidden" name="next" value={next} />
               <Button
                 type="submit"
                 size="default"
                 className="h-10 w-full text-sm"
               >
-                Jetzt für 40 € starten
+                {afterChat
+                  ? "40 € zahlen & Auswertung anzeigen"
+                  : "Jetzt für 40 € starten"}
               </Button>
             </form>
             <Button

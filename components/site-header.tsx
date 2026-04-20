@@ -34,7 +34,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <Button asChild size="sm" className="shrink-0">
-          <Link href="/pricing">Jetzt prüfen</Link>
+          <Link href="/check">Jetzt prüfen</Link>
         </Button>
       </div>
     </header>

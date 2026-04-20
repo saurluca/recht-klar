@@ -30,8 +30,8 @@ export default function HomePage() {
         </p>
         <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
           <Button asChild size="lg">
-            <Link href="/pricing" className="inline-flex items-center gap-2">
-              Legal-Check starten – 40 €
+            <Link href="/check" className="inline-flex items-center gap-2">
+              Kostenlos starten
               <ArrowRight className="size-4" />
             </Link>
           </Button>
@@ -103,7 +103,7 @@ export default function HomePage() {
               {
                 step: "3",
                 title: "Legal Scorecard",
-                body: "Handlungsbedarf, Erfolgschance und Kostenrisiko auf einen Blick – plus nächster Schritt.",
+                body: "Nach einmaliger Zahlung: Handlungsbedarf, Erfolgschance und Kostenrisiko – plus nächster Schritt.",
               },
             ].map((item) => (
               <div
@@ -204,7 +204,9 @@ export default function HomePage() {
               </p>
               <Disclaimer variant="short" />
               <Button asChild className="w-full" size="lg">
-                <Link href="/pricing">Zur Kasse (MVP simuliert)</Link>
+                <Link href="/check">
+                  Chat starten – Kasse vor der Auswertung
+                </Link>
               </Button>
             </CardContent>
           </Card>
@@ -223,7 +225,7 @@ export default function HomePage() {
             von KI-Information.
           </p>
           <Button asChild size="lg" variant="secondary" className="mt-8">
-            <Link href="/pricing">Jetzt Legal-Check starten</Link>
+            <Link href="/check">Jetzt Legal-Check starten</Link>
           </Button>
         </div>
       </section>

@@ -5,12 +5,14 @@ export function proxy(req: NextRequest) {
   if (!paid) {
     const url = req.nextUrl.clone();
     url.pathname = "/pricing";
-    url.searchParams.set("from", "check");
+    if (req.nextUrl.pathname.startsWith("/check/finish")) {
+      url.searchParams.set("next", "/check/finish");
+    }
     return NextResponse.redirect(url);
   }
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/check/:path*"],
+  matcher: ["/check/result", "/check/finish"],
 };

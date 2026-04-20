@@ -1,4 +1,5 @@
 import { generateObject, type UIMessage } from "ai";
+import { cookies } from "next/headers";
 import { scorecardSchema } from "@/lib/scorecard-schema";
 import { getAreaBySlug } from "@/lib/legal-areas";
 import { getLanguageModel } from "@/lib/openrouter";
@@ -25,6 +26,17 @@ function transcriptFromMessages(messages: UIMessage[]): string {
 }
 
 export async function POST(req: Request) {
+  const jar = await cookies();
+  if (jar.get("rk_paid")?.value !== "1") {
+    return new Response(
+      JSON.stringify({
+        error:
+          "Die Auswertung ist nach dem Kauf freigeschaltet. Bitte schließe zuerst die Zahlung ab.",
+      }),
+      { status: 403, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   if (!process.env.OPENROUTER_API_KEY) {
     return new Response(
       JSON.stringify({

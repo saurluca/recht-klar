@@ -24,7 +24,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { SCORECARD_STORAGE_KEY, type StoredCheckResult } from "@/lib/session";
+import {
+  PENDING_SCORECARD_KEY,
+  type PendingScorecardPayload,
+} from "@/lib/session";
 import { ArrowLeft, ArrowUp, Loader2 } from "lucide-react";
 
 function rawMessageText(m: UIMessage): string {
@@ -44,7 +47,6 @@ function messageTextForTranscript(m: UIMessage): string {
 export function ChatIntake({ area }: { area: LegalArea }) {
   const router = useRouter();
   const [input, setInput] = useState("");
-  const [scoring, setScoring] = useState(false);
 
   const welcome: UIMessage = useMemo(
     () => ({
@@ -78,7 +80,7 @@ export function ChatIntake({ area }: { area: LegalArea }) {
   const userTurns = messages.filter((m) => m.role === "user").length;
   const canStartScorecard = userTurns >= 3;
   const busy = status === "submitted" || status === "streaming";
-  const sendDisabled = !input.trim() || status !== "ready" || scoring || busy;
+  const sendDisabled = !input.trim() || status !== "ready" || busy;
 
   let lastAssistantStatus: ReturnType<typeof parseIntakeStatusFooter> = null;
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -90,7 +92,7 @@ export function ChatIntake({ area }: { area: LegalArea }) {
 
   async function submitMessage() {
     const t = input.trim();
-    if (!t || status !== "ready" || scoring) return;
+    if (!t || status !== "ready") return;
     await sendMessage({ text: t });
     setInput("");
   }
@@ -107,47 +109,31 @@ export function ChatIntake({ area }: { area: LegalArea }) {
     void submitMessage();
   }
 
-  async function runScorecard() {
+  function goToCheckoutForScorecard() {
     if (userTurns < 3) {
       toast.error("Bitte beantworte mindestens drei Fragen.");
       return;
     }
-    setScoring(true);
+    if (busy) return;
+
+    const transcript = messages
+      .map((m) => `${m.role}: ${messageTextForTranscript(m)}`)
+      .join("\n\n");
+    const payload: PendingScorecardPayload = {
+      messages,
+      areaSlug: area.slug,
+      areaLabel: area.label,
+      transcript,
+    };
     try {
-      const res = await fetch("/api/scorecard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, areaSlug: area.slug }),
-      });
-      const data = (await res.json()) as
-        | { scorecard: StoredCheckResult["scorecard"] }
-        | { error?: string };
-      if (!res.ok || !("scorecard" in data)) {
-        throw new Error(
-          "error" in data && typeof data.error === "string"
-            ? data.error
-            : "Auswertung fehlgeschlagen",
-        );
-      }
-      const transcript = messages
-        .map((m) => `${m.role}: ${messageTextForTranscript(m)}`)
-        .join("\n\n");
-      const payload: StoredCheckResult = {
-        scorecard: data.scorecard,
-        areaSlug: area.slug,
-        areaLabel: area.label,
-        transcript,
-        createdAt: new Date().toISOString(),
-      };
-      sessionStorage.setItem(SCORECARD_STORAGE_KEY, JSON.stringify(payload));
-      router.push("/check/result");
-    } catch (err) {
+      sessionStorage.setItem(PENDING_SCORECARD_KEY, JSON.stringify(payload));
+    } catch {
       toast.error(
-        err instanceof Error ? err.message : "Auswertung fehlgeschlagen",
+        "Der Chat konnte nicht zwischengespeichert werden. Bitte erlaube lokale Speicherung im Browser.",
       );
-    } finally {
-      setScoring(false);
+      return;
     }
+    router.push("/pricing?next=%2Fcheck%2Ffinish");
   }
 
   return (
@@ -226,7 +212,7 @@ export function ChatIntake({ area }: { area: LegalArea }) {
               onKeyDown={onComposerKeyDown}
               placeholder="Nachricht an Recht-Klar…"
               rows={1}
-              disabled={status !== "ready" || scoring}
+              disabled={status !== "ready"}
               className="max-h-[min(30dvh,8rem)] min-h-[44px] flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-sm shadow-none focus-visible:ring-0"
             />
             <Button
@@ -254,12 +240,12 @@ export function ChatIntake({ area }: { area: LegalArea }) {
             ) : lastAssistantStatus === "BEREIT" ? (
               <p className="text-success text-center text-[10px] sm:text-xs">
                 Der Assistent hat genug Infos für eine erste Einordnung – du
-                kannst die Auswertung starten.
+                kannst zur Kasse gehen und die Auswertung freischalten.
               </p>
             ) : lastAssistantStatus === "MEHR_INFO" ? (
               <p className="text-warning text-center text-[10px] sm:text-xs">
                 Der Assistent schlägt vor, noch Details zu klären – du kannst
-                trotzdem fortfahren.
+                trotzdem zur Kasse gehen.
               </p>
             ) : (
               <p className="text-muted-foreground text-center text-[10px] sm:text-xs">
@@ -273,17 +259,10 @@ export function ChatIntake({ area }: { area: LegalArea }) {
               variant="default"
               size="default"
               className="h-10 w-full text-sm font-medium"
-              disabled={!canStartScorecard || busy || scoring}
-              onClick={() => void runScorecard()}
+              disabled={!canStartScorecard || busy}
+              onClick={goToCheckoutForScorecard}
             >
-              {scoring ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Auswertung läuft…
-                </>
-              ) : (
-                "Auswertung erstellen"
-              )}
+              Weiter zur Auswertung (Kasse)
             </Button>
           </div>
 
