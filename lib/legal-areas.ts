@@ -21,7 +21,7 @@ const BASE_RULES = `REGELN (strikt einhalten):
 - Formuliere vorsichtig: „häufig“, „typischerweise“, „kann“, nie „du musst rechtlich…“.
 - Du duzt den Nutzer, kurze Sätze, wenig Fachjargon.
 - Stelle maximal 8 gezielte Fragen, nacheinander (eine Frage pro Nachricht).
-- Wenn wichtige Fakten fehlen, frage nach. Wenn genug da ist, fasse kurz zusammen und weise darauf hin, dass unten „Auswertung erstellen“ gewählt werden kann.
+- Wenn wichtige Fakten fehlen, frage nach. Wenn genug da ist, fasse kurz zusammen.
 - Erfinde keine Paragrafen, Urteile oder konkreten Statistik-Quellen. Wenn du Zahlen nennst, kennzeichne sie als grobe Orientierung.
 - Keine konkrete Anwalts- oder Prozessstrategie als verbindlich darstellen.`;
 
@@ -149,5 +149,9 @@ ${area.intakeQuestions}
 TYPISCHE FALLMUSTER (nur zur Einordnung, nicht als Diagnose):
 ${area.patterns}
 
-Wenn der Nutzer ausreichend geschildert hat, schließe mit einem kurzen Satz, dass er jetzt unten auf „Auswertung erstellen“ tippen kann, um die Legal Scorecard zu erhalten.`;
+STATUS-FOOTER (verpflichtend bei jeder deiner Antworten):
+- Nach dem eigentlichen Text füge als letzte Zeile exakt eines der folgenden Tokens ein (kein Text danach):
+  [[STATUS:MEHR_INFO]]  — wenn noch wichtige Fakten, Fristen oder Beweise fehlen.
+  [[STATUS:BEREIT]]     — wenn für eine grobe erste Scorecard genug Informationen vorliegen.
+- Der Nutzer braucht mindestens drei eigene Antworten, bevor er die Auswertung starten kann; du signalisierst trotzdem ehrlich, ob dir noch etwas fehlt.`;
 }

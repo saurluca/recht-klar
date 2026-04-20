@@ -2,17 +2,22 @@ import { generateObject, type UIMessage } from "ai";
 import { scorecardSchema } from "@/lib/scorecard-schema";
 import { getAreaBySlug } from "@/lib/legal-areas";
 import { getLanguageModel } from "@/lib/openrouter";
+import { stripIntakeStatusFooter } from "@/lib/intake-status";
 
 export const maxDuration = 60;
 
 function transcriptFromMessages(messages: UIMessage[]): string {
   return messages
     .map((m) => {
-      const text =
+      const raw =
         m.parts
           ?.filter((p) => p.type === "text")
           .map((p) => (p.type === "text" ? p.text : ""))
           .join("") ?? "";
+      const text =
+        m.role === "assistant"
+          ? stripIntakeStatusFooter(raw)
+          : raw;
       return `${m.role.toUpperCase()}: ${text.trim()}`;
     })
     .filter((line) => line.length > 3)
@@ -44,9 +49,16 @@ export async function POST(req: Request) {
     areaSlug?: string;
   };
 
-  if (!messages || !Array.isArray(messages) || messages.length < 2) {
+  const userTurns = Array.isArray(messages)
+    ? messages.filter((m) => m.role === "user").length
+    : 0;
+
+  if (!messages || !Array.isArray(messages) || userTurns < 3) {
     return new Response(
-      JSON.stringify({ error: "Zu wenig Chat-Verlauf für eine Auswertung." }),
+      JSON.stringify({
+        error:
+          "Mindestens drei deiner Antworten werden für die Auswertung benötigt.",
+      }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
   }

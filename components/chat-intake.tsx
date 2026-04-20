@@ -8,6 +8,10 @@ import { useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 import { toast } from "sonner";
 import type { LegalArea } from "@/lib/legal-areas";
 import {
+  parseIntakeStatusFooter,
+  stripIntakeStatusFooter,
+} from "@/lib/intake-status";
+import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
@@ -23,13 +27,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { SCORECARD_STORAGE_KEY, type StoredCheckResult } from "@/lib/session";
 import { ArrowLeft, ArrowUp, Loader2 } from "lucide-react";
 
-function messageText(m: UIMessage): string {
+function rawMessageText(m: UIMessage): string {
   return (
     m.parts
       ?.filter((p) => p.type === "text")
       .map((p) => (p.type === "text" ? p.text : ""))
       .join("") ?? ""
   );
+}
+
+function messageTextForTranscript(m: UIMessage): string {
+  const raw = rawMessageText(m);
+  return m.role === "assistant" ? stripIntakeStatusFooter(raw) : raw;
 }
 
 export function ChatIntake({ area }: { area: LegalArea }) {
@@ -41,7 +50,12 @@ export function ChatIntake({ area }: { area: LegalArea }) {
     () => ({
       id: "welcome",
       role: "assistant",
-      parts: [{ type: "text", text: area.chatIntro }],
+      parts: [
+        {
+          type: "text",
+          text: `${area.chatIntro}\n\n[[STATUS:MEHR_INFO]]`,
+        },
+      ],
     }),
     [area.chatIntro],
   );
@@ -62,9 +76,17 @@ export function ChatIntake({ area }: { area: LegalArea }) {
   });
 
   const userTurns = messages.filter((m) => m.role === "user").length;
-  const canScore = userTurns >= 2;
+  const canStartScorecard = userTurns >= 3;
   const busy = status === "submitted" || status === "streaming";
   const sendDisabled = !input.trim() || status !== "ready" || scoring || busy;
+
+  let lastAssistantStatus: ReturnType<typeof parseIntakeStatusFooter> = null;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.role !== "assistant") continue;
+    lastAssistantStatus = parseIntakeStatusFooter(rawMessageText(m));
+    break;
+  }
 
   async function submitMessage() {
     const t = input.trim();
@@ -79,13 +101,17 @@ export function ChatIntake({ area }: { area: LegalArea }) {
   }
 
   function onComposerKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      void submitMessage();
-    }
+    if (e.key !== "Enter" || e.shiftKey) return;
+    if (e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    void submitMessage();
   }
 
   async function runScorecard() {
+    if (userTurns < 3) {
+      toast.error("Bitte beantworte mindestens drei Fragen.");
+      return;
+    }
     setScoring(true);
     try {
       const res = await fetch("/api/scorecard", {
@@ -104,7 +130,7 @@ export function ChatIntake({ area }: { area: LegalArea }) {
         );
       }
       const transcript = messages
-        .map((m) => `${m.role}: ${messageText(m)}`)
+        .map((m) => `${m.role}: ${messageTextForTranscript(m)}`)
         .join("\n\n");
       const payload: StoredCheckResult = {
         scorecard: data.scorecard,
@@ -126,7 +152,6 @@ export function ChatIntake({ area }: { area: LegalArea }) {
 
   return (
     <div className="bg-background flex min-h-0 min-w-0 flex-1 flex-col">
-      {/* Obere Leiste — kompakt wie ChatGPT */}
       <header className="border-border flex shrink-0 items-center gap-2 border-b px-2 py-2 sm:px-3">
         <Button
           variant="ghost"
@@ -147,13 +172,11 @@ export function ChatIntake({ area }: { area: LegalArea }) {
             className="mt-1 h-0.5"
           />
           <p className="text-muted-foreground mt-0.5 text-[10px] sm:text-xs">
-            {userTurns} / ~6 Antworten
-            {!canScore ? " · noch etwas Geduld" : " · Auswertung möglich"}
+            {userTurns} Nutzerantworten · mindestens 3 für die Auswertung
           </p>
         </div>
       </header>
 
-      {/* Nachrichten — scrollt nur hier */}
       <Conversation className="bg-muted/15 min-h-0 flex-1">
         <ConversationContent className="mx-auto max-w-3xl gap-5 px-3 py-4 sm:gap-6 sm:px-4 md:px-6">
           {messages.map((m) => (
@@ -162,7 +185,9 @@ export function ChatIntake({ area }: { area: LegalArea }) {
                 {m.parts?.map((part, i) =>
                   part.type === "text" ? (
                     m.role === "assistant" ? (
-                      <MessageResponse key={i}>{part.text}</MessageResponse>
+                      <MessageResponse key={i}>
+                        {stripIntakeStatusFooter(part.text)}
+                      </MessageResponse>
                     ) : (
                       <p key={i} className="whitespace-pre-wrap text-sm">
                         {part.text}
@@ -189,33 +214,8 @@ export function ChatIntake({ area }: { area: LegalArea }) {
         </p>
       ) : null}
 
-      {/* Composer — fixiert unten im Panel */}
       <div className="border-border bg-background/95 supports-backdrop-filter:bg-background/80 shrink-0 border-t px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur sm:px-4 sm:py-3">
         <div className="mx-auto max-w-3xl space-y-2">
-          {canScore ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="h-9 w-full text-xs sm:text-sm"
-              disabled={busy || scoring}
-              onClick={() => void runScorecard()}
-            >
-              {scoring ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" />
-                  Auswertung läuft…
-                </>
-              ) : (
-                "Auswertung erstellen"
-              )}
-            </Button>
-          ) : (
-            <p className="text-muted-foreground text-center text-[10px] sm:text-xs">
-              Mindestens zwei Antworten – dann erscheint die Auswertung.
-            </p>
-          )}
-
           <form
             onSubmit={(e) => void onSubmit(e)}
             className="border-border flex items-end gap-2 rounded-3xl border bg-muted/50 px-2 py-1.5 shadow-sm sm:px-3 sm:py-2"
@@ -243,8 +243,53 @@ export function ChatIntake({ area }: { area: LegalArea }) {
               )}
             </Button>
           </form>
+
+          <div className="space-y-1.5 px-0.5">
+            {!canStartScorecard ? (
+              <p className="text-muted-foreground text-center text-[10px] sm:text-xs">
+                Noch {3 - userTurns}{" "}
+                {3 - userTurns === 1 ? "Antwort" : "Antworten"} bis die
+                Auswertung freigeschaltet ist.
+              </p>
+            ) : lastAssistantStatus === "BEREIT" ? (
+              <p className="text-success text-center text-[10px] sm:text-xs">
+                Der Assistent hat genug Infos für eine erste Einordnung – du
+                kannst die Auswertung starten.
+              </p>
+            ) : lastAssistantStatus === "MEHR_INFO" ? (
+              <p className="text-warning text-center text-[10px] sm:text-xs">
+                Der Assistent schlägt vor, noch Details zu klären – du kannst
+                trotzdem fortfahren.
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-center text-[10px] sm:text-xs">
+                Warte auf die nächste Assistenten-Antwort für die Empfehlung
+                (mehr Infos vs. bereit).
+              </p>
+            )}
+
+            <Button
+              type="button"
+              variant="default"
+              size="default"
+              className="h-10 w-full text-sm font-medium"
+              disabled={!canStartScorecard || busy || scoring}
+              onClick={() => void runScorecard()}
+            >
+              {scoring ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Auswertung läuft…
+                </>
+              ) : (
+                "Auswertung erstellen"
+              )}
+            </Button>
+          </div>
+
           <p className="text-muted-foreground px-1 text-center text-[10px] leading-tight">
-            Keine Rechtsberatung – nur unverbindliche Information (§ 2 RDG).
+            Enter sendet die Nachricht, Shift+Enter neue Zeile. Keine
+            Rechtsberatung – nur Information (§ 2 RDG).
           </p>
         </div>
       </div>
