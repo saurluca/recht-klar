@@ -11,17 +11,23 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { FaqSection } from "@/components/faq";
 import { Disclaimer } from "@/components/disclaimer";
-import { ArrowRight, Euro, Search, ShieldOff, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  HelpCircle,
+  Search,
+  ShieldOff,
+  Sparkles,
+} from "lucide-react";
 
 export default function HomePage() {
   return (
     <>
       <section className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32">
         <Badge variant="secondary" className="mb-6">
-          KI-gestützte Ersteinschätzung · 40 €
+          KI-gestützte Ersteinschätzung
         </Badge>
         <h1 className="text-foreground max-w-3xl text-4xl font-semibold tracking-tight md:text-5xl lg:text-6xl">
-          Rechtssicherheit in 5 Minuten. Zum Festpreis.
+          Rechtssicherheit in 5 Minuten.
         </h1>
         <p className="text-muted-foreground mt-6 max-w-2xl text-lg leading-relaxed">
           Beschreibe dein Anliegen im geführten Chat. Du erhältst eine klare
@@ -48,11 +54,13 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-6 px-6 py-16 md:grid-cols-3 md:px-8 md:py-24">
           <Card className="border-border bg-background/60">
             <CardHeader>
-              <Euro className="text-primary size-8" />
-              <CardTitle className="text-lg">Erstberatung ist teuer</CardTitle>
+              <HelpCircle className="text-primary size-8" />
+              <CardTitle className="text-lg">
+                Der erste Schritt fällt schwer
+              </CardTitle>
               <CardDescription>
-                Anwaltliche Erstberatung kostet häufig 190–500 € – bevor klar
-                ist, ob sich ein Schritt überhaupt lohnt.
+                Ohne Einordnung ist unklar, ob und wo du ansetzen solltest –
+                viele Anliegen bleiben deshalb liegen.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -103,7 +111,7 @@ export default function HomePage() {
               {
                 step: "3",
                 title: "Legal Scorecard",
-                body: "Nach einmaliger Zahlung: Handlungsbedarf, Erfolgschance und Kostenrisiko – plus nächster Schritt.",
+                body: "Handlungsbedarf, Erfolgschance und Kostenrisiko – strukturiert auf einen Blick, plus nächster Schritt.",
               },
             ].map((item) => (
               <div
@@ -173,8 +181,8 @@ export default function HomePage() {
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Kostenrisiko</span>
-                <span className="font-mono text-right">
-                  z. B. 1.200 € bei Streitwert 5.000 €
+                <span className="text-right font-medium">
+                  z. B. moderat bis höher
                 </span>
               </div>
               <p className="text-muted-foreground border-border border-t pt-4 text-xs leading-relaxed">
@@ -189,24 +197,21 @@ export default function HomePage() {
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-xl px-6 md:px-8">
           <h2 className="text-foreground text-center text-2xl font-semibold tracking-tight">
-            Festpreis, fair und klar
+            Struktur statt Bauchgefühl
           </h2>
           <Card className="mt-8">
             <CardHeader>
               <Badge variant="secondary">Legal-Check</Badge>
-              <CardTitle className="text-3xl">40 €</CardTitle>
-              <CardDescription>einmalig · inkl. MwSt.</CardDescription>
+              <CardTitle className="text-xl">Geführt zum klaren Bild</CardTitle>
+              <CardDescription>
+                Chat-Intake, Übersicht und optional der Schritt zur
+                Partnerkanzlei – wenn du weitergehen willst.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-muted-foreground text-sm">
-                Geführter Chat, Legal Scorecard und optionaler Schritt zur
-                Partnerkanzlei.
-              </p>
               <Disclaimer variant="short" />
               <Button asChild className="w-full" size="lg">
-                <Link href="/check">
-                  Chat starten – Kasse vor der Auswertung
-                </Link>
+                <Link href="/check">Chat starten</Link>
               </Button>
             </CardContent>
           </Card>

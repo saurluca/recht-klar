@@ -4,7 +4,6 @@ import { Scale } from "lucide-react";
 
 const nav = [
   { href: "/#how", label: "So funktioniert's" },
-  { href: "/pricing", label: "Preis" },
   { href: "/#faq", label: "FAQ" },
 ];
 

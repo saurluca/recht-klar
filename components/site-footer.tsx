@@ -19,12 +19,6 @@ export function SiteFooter() {
           >
             Datenschutz
           </Link>
-          <Link
-            href="/pricing"
-            className="hover:text-foreground transition-colors"
-          >
-            Preise
-          </Link>
         </div>
         <p className="text-muted-foreground text-xs">
           © {new Date().getFullYear()} Recht-Klar. Alle Rechte vorbehalten.

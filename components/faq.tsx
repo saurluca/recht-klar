@@ -19,8 +19,8 @@ const ITEMS = [
     a: "Du siehst deine Legal Scorecard mit Handlungsbedarf, Erfolgschance und Kostenrisiko. Wenn es passt, kannst du per E-Mail eine Partnerkanzlei kontaktieren.",
   },
   {
-    q: "Kann ich Geld zurückbekommen?",
-    a: "Im MVP ist die Zahlung technisch simuliert. Später gelten die AGB zum Zeitpunkt des Kaufs – siehe dann unsere Rückerstattungsregeln.",
+    q: "Gibt es verbindliche Fristen oder Garantien?",
+    a: "Nein. Die Einordnung ersetzt keine Prüfung durch eine Kanzlei und beinhaltet keine Prozess- oder Erfolgsgarantie.",
   },
   {
     q: "Welche Rechtsgebiete werden abgedeckt?",

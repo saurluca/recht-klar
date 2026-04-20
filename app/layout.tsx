@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Recht-Klar – Legal-Check zum Festpreis",
+  title: "Recht-Klar – Legal-Check & Ersteinschätzung",
   description:
     "Geführter Chat, Legal Scorecard und nächste Schritte – unverbindliche Ersteinschätzung, keine Rechtsberatung.",
 };
